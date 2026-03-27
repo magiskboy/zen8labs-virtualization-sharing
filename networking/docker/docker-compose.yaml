@@ -1,0 +1,63 @@
+networks:
+  net-A:
+    name: net-A
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.1.0/24
+          gateway: 172.18.1.1
+    driver_opts:
+      com.docker.network.bridge.name: net-A
+
+  net-B:
+    name: net-B
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.2.0/24
+          gateway: 172.18.2.1
+    driver_opts:
+      com.docker.network.bridge.name: net-B
+
+
+services:
+  pc-1:
+    container_name: pc-1
+    image: pc:latest
+    networks:
+      - net-A
+    cap_add:
+      - NET_ADMIN
+
+  pc-2:
+    container_name: pc-2
+    image: pc:latest
+    networks:
+      - net-A
+    cap_add:
+      - NET_ADMIN
+
+  pc-3:
+    container_name: pc-3
+    image: pc:latest
+    networks:
+      - net-B
+    cap_add:
+      - NET_ADMIN
+
+  pc-4:
+    container_name: pc-4
+    image: pc:latest
+    networks:
+      - net-B
+    cap_add:
+      - NET_ADMIN
+
+  router:
+    container_name: router
+    image: pc:latest
+    sysctls:
+      - net.ipv4.ip_forward=1
+    networks:
+      - net-A
+      - net-B

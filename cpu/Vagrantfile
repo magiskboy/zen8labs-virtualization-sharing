@@ -1,0 +1,52 @@
+# -*- mode: ruby -*-
+# frozen_string_literal: true
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "generic/ubuntu2204"
+
+  config.vm.synced_folder ".", "/home/vagrant/source"
+
+  config.vm.provider :libvirt do |lv|
+    lv.driver = "kvm"
+    lv.cpu_mode = "host-passthrough"
+    lv.disk_driver cache: "none"
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+  export DEBIAN_FRONTEND=noninteractive
+
+  systemctl disable --now systemd-resolved || true
+  rm -f /etc/resolv.conf
+  echo "nameserver 8.8.8.8" > /etc/resolv.conf
+  echo "nameserver 8.8.4.4" >> /etc/resolv.conf
+
+  apt-get update -y
+  apt-get install -y wrk python3-pip nginx
+  pip install numpy
+  SHELL
+
+  config.vm.define "vm1", primary: true do |vm|
+    vm.vm.provider :libvirt do |lv|
+      lv.cpus = 1
+      lv.cpuset = "0-0"
+      lv.memory = 2048
+    end
+  end
+
+  config.vm.define "vm2", primary: true do |vm|
+    vm.vm.provider :libvirt do |lv|
+      lv.cpus = 2
+      lv.cpuset = "1-1"
+      lv.memory = 2048
+    end
+  end
+
+  config.vm.define "vm3", primary: true do |vm|
+    vm.vm.provider :libvirt do |lv|
+      lv.cpus = 4
+      lv.cpuset = "4-8"
+      lv.memory = 4096
+    end
+  end
+end
+
